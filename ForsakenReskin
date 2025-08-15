@@ -1,139 +1,191 @@
-local plr = game.Players.LocalPlayer
-local char = plr.Character or plr.CharacterAdded:Wait()
-local hum = char:WaitForChild("Humanoid")
-local gui = game:GetService("StarterGui")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local StarterGui = game:GetService("StarterGui")
 
-local anims = {
+-- Animation whitelist
+local WHITELISTED_ANIMS = {
     "rbxassetid://83465205704188",
     "rbxassetid://109700476007435",
     "rbxassetid://117451341682452"
 }
 
-local playing = false
-for _, a in pairs(hum:GetPlayingAnimationTracks()) do
-    for _, id in pairs(anims) do
-        if string.find(a.Animation.AnimationId, id) then
-            playing = true
+local function isPlayingWhitelistedAnim()
+    for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+        for _, animId in ipairs(WHITELISTED_ANIMS) do
+            if string.find(track.Animation.AnimationId, animId) then
+                return true
+            end
         end
     end
+    return false
 end
 
-if not playing then
-    gui:SetCore("SendNotification", {Title="Not Killer", Text="be killer noli lol", Duration=6})
+if not isPlayingWhitelistedAnim() then
+    StarterGui:SetCore("SendNotification", {
+        Title = "Not Killer",
+        Text = "You need to be killer as Noli, and have default skin 💔✌️",
+        Duration = 6
+    })
     return
 end
 
-local cleanups = {}
+local cleanup = {}
 
-local noli = workspace.Players.Killers:FindFirstChild("Noli")
-if noli then
-    local nested = noli:FindFirstChild("Noli")
-    if nested then nested:Destroy() end
+local function applyEffects()
+    local noli = workspace.Players.Killers:FindFirstChild("Noli")
+    if noli then
+        local nestedNoli = noli:FindFirstChild("Noli")
+        if nestedNoli then
+            nestedNoli:Destroy()
+        end
 
-    local head = noli:FindFirstChild("Head")
-    if head then
-        head.Transparency = 0
-        head.BrickColor = BrickColor.White()
-        local f = head:FindFirstChildOfClass("Decal") or Instance.new("Decal")
-        f.Name = "face"
-        f.Texture = "http://www.roblox.com/asset/?id=35397044"
-        f.Face = Enum.NormalId.Front
-        f.Parent = head
-    end
+        local head = noli:FindFirstChild("Head")
+        local torso = noli:FindFirstChild("Torso")
+        local leftLeg = noli:FindFirstChild("Left Leg")
+        local rightLeg = noli:FindFirstChild("Right Leg")
+        local leftArm = noli:FindFirstChild("Left Arm")
+        local rightArm = noli:FindFirstChild("Right Arm")
 
-    local torso = noli:FindFirstChild("Torso")
-    if torso then
-        torso.Transparency = 0
-        local s = torso:FindFirstChildOfClass("Shirt") or Instance.new("Shirt")
-        s.ShirtTemplate = "http://www.roblox.com/asset/?id=121182451132659"
-        s.Parent = noli
-    end
+        if head then
+            head.Transparency = 0
+            head.BrickColor = BrickColor.new("White")
+            local face = head:FindFirstChildOfClass("Decal") or Instance.new("Decal")
+            face.Name = "face"
+            face.Texture = "http://www.roblox.com/asset/?id=35397044"
+            face.Face = Enum.NormalId.Front
+            face.Parent = head
+        end
 
-    local parts = {"Left Arm","Right Arm","Left Leg","Right Leg"}
-    for _, p in pairs(parts) do
-        local part = noli:FindFirstChild(p)
-        if part then
-            part.Transparency = 0
-            if p == "Left Arm" or p == "Right Arm" then
-                part.BrickColor = BrickColor.White()
+        if torso then
+            torso.Transparency = 0
+            local shirt = torso:FindFirstChildOfClass("Shirt") or Instance.new("Shirt")
+            shirt.Name = "Shirt"
+            shirt.ShirtTemplate = "http://www.roblox.com/asset/?id=121182451132659"
+            shirt.Parent = noli
+        end
+
+        if leftLeg then leftLeg.Transparency = 0 end
+        if rightLeg then rightLeg.Transparency = 0 end
+        if leftArm then
+            leftArm.Transparency = 0
+            leftArm.BrickColor = BrickColor.new("White")
+        end
+        if rightArm then
+            rightArm.Transparency = 0
+            rightArm.BrickColor = BrickColor.new("White")
+
+            -- TentacleBase beams recolor
+            local tentacleBase = rightArm:FindFirstChild("TentacleBase")
+            if tentacleBase then
+                for _, obj in ipairs(tentacleBase:GetDescendants()) do
+                    if obj:IsA("Beam") then
+                        obj.Color = ColorSequence.new({
+                            ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 180, 180)), -- grey
+                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))  -- white
+                        })
+                    end
+                end
+            end
+        end
+
+        local crown = noli:FindFirstChild("VoidstarCrown")
+        if crown and crown:IsA("MeshPart") then
+            crown.MeshId = "http://www.roblox.com/asset/?id=1278979"
+            crown.TextureID = "http://www.roblox.com/asset/?id=190240677"
+            local sa = crown:FindFirstChildOfClass("SurfaceAppearance")
+            if sa then
+                sa:Destroy()
+            end
+        end
+
+        local voidstar = noli:FindFirstChild("Voidstar")
+        if voidstar and voidstar:IsA("MeshPart") then
+            voidstar.MeshId = "http://www.roblox.com/asset/?id=16646125"
+            voidstar.TextureID = "http://www.roblox.com/asset/?id=16921716"
+            voidstar.Size = Vector3.new(2.7, 2.7, 2.7)
+        end
+
+        for _, obj in pairs(noli:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") then
+                obj.Color = ColorSequence.new(Color3.new(1,1,1))
+            elseif obj:IsA("Trail") then
+                obj.Color = ColorSequence.new(Color3.new(0.7,0.7,0.7))
+            elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+                obj.Color = Color3.new(1,1,1)
             end
         end
     end
 
-    local crown = noli:FindFirstChild("VoidstarCrown")
-    if crown then
-        crown.MeshId = "http://www.roblox.com/asset/?id=1278979"
-        crown.TextureID = "http://www.roblox.com/asset/?id=190240677"
-        local sa = crown:FindFirstChildOfClass("SurfaceAppearance")
-        if sa then sa:Destroy() end
-    end
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = character
+    highlight.FillColor = Color3.new(1,1,1)
+    highlight.FillTransparency = 0.9
+    highlight.OutlineColor = Color3.new(0,0,0)
+    highlight.OutlineTransparency = 0
+    highlight.Parent = character
+    table.insert(cleanup, highlight)
 
-    for _, o in pairs(noli:GetDescendants()) do
-        if o:IsA("ParticleEmitter") then
-            o.Color = ColorSequence.new(Color3.new(1,1,1))
-        elseif o:IsA("Trail") then
-            o.Color = ColorSequence.new(Color3.new(0.7,0.7,0.7))
-        elseif o:IsA("PointLight") or o:IsA("SpotLight") or o:IsA("SurfaceLight") then
-            o.Color = Color3.new(1,1,1)
+    spawn(function()
+        while humanoid.Health > 0 do
+            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+                track:AdjustSpeed(0)
+            end
+            task.wait(0.1)
+            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+                track:AdjustSpeed(1)
+            end
+            task.wait(0.5)
+        end
+    end)
+
+    -- Sound replacements
+    local replacements = {
+        ["rbxassetid://84531768750039"] = "rbxassetid://113081858218471",
+        ["rbxassetid://105569529052440"] = "rbxassetid://113081858218471",
+        ["rbxassetid://92391154089183"] = "rbxassetid://113081858218471",
+        ["rbxassetid://70685065006591"] = "rbxassetid://113081858218471",
+        ["rbxassetid://109301111857562"] = "rbxassetid://115149563495115",
+        ["rbxassetid://91228266003282"] = "rbxassetid://123588340620105",
+        ["rbxassetid://95524724737837"] = "rbxassetid://71037101627016",
+        ["rbxassetid://136406635725343"] = "rbxassetid://78335194527508",
+    }
+
+    local function tryReplaceSound(sound)
+        if sound:IsA("Sound") then
+            local sid = sound.SoundId
+            if sid == "rbxassetid://122812329550651" then
+                sound.SoundId = math.random() < 0.5 and "rbxassetid://5502274288" or "rbxassetid://4646947382"
+                sound.TimeLength = 2
+            elseif sid == "rbxassetid://134916679174108" then
+                sound.SoundId = "rbxassetid://134916679174108"
+                sound.PlaybackSpeed = 0.5
+            elseif replacements[sid] then
+                sound.SoundId = replacements[sid]
+            end
         end
     end
+
+    for _, descendant in ipairs(workspace:GetDescendants()) do
+        tryReplaceSound(descendant)
+    end
+
+    local soundConn
+    soundConn = workspace.DescendantAdded:Connect(function(descendant)
+        task.wait()
+        tryReplaceSound(descendant)
+    end)
+    table.insert(cleanup, soundConn)
 end
 
-local hl = Instance.new("Highlight")
-hl.Adornee = char
-hl.FillColor = Color3.new(1,1,1)
-hl.FillTransparency = 0.9
-hl.OutlineColor = Color3.new(0,0,0)
-hl.OutlineTransparency = 0
-hl.Parent = char
-table.insert(cleanups, hl)
+applyEffects()
 
-spawn(function()
-    while hum.Health > 0 do
-        for _, t in pairs(hum:GetPlayingAnimationTracks()) do
-            t:AdjustSpeed(0)
-        end
-        task.wait(0.1)
-        for _, t in pairs(hum:GetPlayingAnimationTracks()) do
-            t:AdjustSpeed(1)
-        end
-        task.wait(0.5)
-    end
-end)
-
-local reps = {
-    ["rbxassetid://84531768750039"] = "rbxassetid://113081858218471",
-    ["rbxassetid://105569529052440"] = "rbxassetid://113081858218471",
-    ["rbxassetid://92391154089183"] = "rbxassetid://113081858218471"
-    -- real
-}
-
-local function repl(s)
-    if s:IsA("Sound") then
-        local id = s.SoundId
-        if reps[id] then
-            s.SoundId = reps[id]
-        end
-    end
-end
-
-for _, d in pairs(workspace:GetDescendants()) do
-    repl(d)
-end
-
-local conn
-conn = workspace.DescendantAdded:Connect(function(d)
-    task.wait()
-    repl(d)
-end)
-table.insert(cleanups, conn)
-
-hum.Died:Connect(function()
-    for _, c in pairs(cleanups) do
-        if typeof(c) == "Instance" then
-            c:Destroy()
-        elseif typeof(c) == "RBXScriptConnection" then
-            c:Disconnect()
+humanoid.Died:Connect(function()
+    for _, item in pairs(cleanup) do
+        if typeof(item) == "Instance" then
+            item:Destroy()
+        elseif typeof(item) == "RBXScriptConnection" then
+            item:Disconnect()
         end
     end
 end)
