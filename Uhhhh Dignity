@@ -1,0 +1,235 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local StarterGui = game:GetService("StarterGui")
+
+local WHITELISTED_ANIMS = {
+	"rbxassetid://117451341682452",
+	"rbxassetid://109700476007435",
+	"rbxassetid://83465205704188"
+}
+
+local function isPlayingWhitelistedAnim()
+	for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+		for _, animId in ipairs(WHITELISTED_ANIMS) do
+			if string.find(track.Animation.AnimationId, animId) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+if not isPlayingWhitelistedAnim() then
+	StarterGui:SetCore("SendNotification", {
+		Title = "Friend Request",
+		Text = "You are not default Noli, nor killer",
+		Duration = 5
+	})
+	return
+else
+	StarterGui:SetCore("SendNotification", {
+		Title = "Script Notification",
+		Text = "Script firedddd/",
+		Duration = 5
+	})
+end
+
+-- ==== EDITABLE PROPERTIES ====
+local crownMeshId = "http://www.roblox.com/asset/?id=1125478"
+local crownTextureId = "http://www.roblox.com/asset/?id=1125479"
+local crownSize = Vector3.new(1.1, 0.73, 1.1)
+
+local leftArmMeshId = "rbxassetid://138108144348090"
+local leftArmTextureId = "rbxassetid://123104875172576"
+local leftArmScale = Vector3.new(1,1,1)
+
+local torsoMeshId = "rbxassetid://70383093236918"
+local torsoTextureId = "rbxassetid://123104875172576"
+local visualTorsoSize = Vector3.new(1,1.1,1.1)
+local visualTorsoCFrameOffset = CFrame.new(-0.7,-0.1,0)
+
+local extraTorsoMeshId = "rbxassetid://92887996087574"
+local extraTorsoTextureId = "rbxassetid://123104875172576"
+local extraTorsoSize = Vector3.new(1,1.1,1)
+local extraTorsoCFrameOffset = CFrame.new(-0.6,0,0)
+
+local shirtTemplate = "http://www.roblox.com/asset/?id=9865284"
+local pantsTemplate = "http://www.roblox.com/asset/?id=2157796"
+local faceTexture = "http://www.roblox.com/asset/?id=7076053"
+
+-- ==== SCRIPT LOGIC ====
+local killers = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers")
+if not killers then return end
+
+local noli = killers:FindFirstChild("Noli")
+if not noli then return end
+
+local noliInner = noli:FindFirstChild("Noli")
+if noliInner then
+	local toRemove = {"Glow","NoliLeft Arm","NoliRight Leg","NoliRight Arm"}
+	for _,n in ipairs(toRemove) do
+		local obj = noliInner:FindFirstChild(n)
+		if obj then obj:Destroy() end
+	end
+
+	local head = noliInner:FindFirstChild("NoliHead")
+	if not head then
+		head = Instance.new("Part")
+		head.Name = "NoliHead"
+		head.Size = Vector3.new(2,1,1)
+		head.Anchored = false
+		head.CanCollide = false
+		head.Parent = noliInner
+		head.Transparency = 0.9
+	end
+
+	for _,c in ipairs(head:GetChildren()) do
+		if c.Name ~= "RightArm" then c:Destroy() end
+	end
+
+	local torso = noliInner:FindFirstChild("NoliTorso")
+	if torso and torso:IsA("MeshPart") then
+		local sa = torso:FindFirstChildOfClass("SurfaceAppearance")
+		if sa then sa:Destroy() end
+
+		torso.MeshId = torsoMeshId
+		torso.TextureID = torsoTextureId
+		torso.Size = Vector3.new(2,2,1)
+
+		local oldVis = torso:FindFirstChild("VisualTorso")
+		if oldVis then oldVis:Destroy() end
+
+		local visual = Instance.new("MeshPart")
+		visual.Name = "VisualTorso"
+		visual.MeshId = torsoMeshId
+		visual.TextureID = torsoTextureId
+		visual.Size = visualTorsoSize
+		visual.Anchored = false
+		visual.CanCollide = false
+		visual.Parent = torso
+		visual.CFrame = torso.CFrame * visualTorsoCFrameOffset
+
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = torso
+		weld.Part1 = visual
+		weld.Parent = visual
+	end
+
+	local oldExtra = torso:FindFirstChild("VisualTorsoExtra")
+	if oldExtra then oldExtra:Destroy() end
+
+	local extraTorso = Instance.new("MeshPart")
+	extraTorso.Name = "VisualTorsoExtra"
+	extraTorso.MeshId = extraTorsoMeshId
+	extraTorso.TextureID = extraTorsoTextureId
+	extraTorso.Size = extraTorsoSize
+	extraTorso.Anchored = false
+	extraTorso.CanCollide = false
+	extraTorso.Parent = torso
+	extraTorso.CFrame = head.CFrame * extraTorsoCFrameOffset
+
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = head
+	weld.Part1 = extraTorso
+	weld.Parent = extraTorso
+
+	spawn(function()
+		while extraTorso.Parent do
+			extraTorso.CFrame = head.CFrame * extraTorsoCFrameOffset
+			wait()
+		end
+	end)
+end
+
+local parts = {"Head","Left Leg","Right Arm","Left Arm","Right Leg","Torso"}
+for _,n in ipairs(parts) do
+	local p = noli:FindFirstChild(n)
+	if p and p:IsA("BasePart") then
+		p.Transparency = 0
+		p.BrickColor = BrickColor.new("Brick yellow")
+		for _,c in ipairs(p:GetChildren()) do
+			if c:IsA("Decal") then c.Transparency = 0 end
+		end
+	end
+end
+
+local shirt = noli:FindFirstChildOfClass("Shirt") or Instance.new("Shirt",noli)
+shirt.ShirtTemplate = shirtTemplate
+local pants = noli:FindFirstChildOfClass("Pants") or Instance.new("Pants",noli)
+pants.PantsTemplate = pantsTemplate
+
+local headPart = noli:FindFirstChild("Head")
+if headPart then
+	local face = headPart:FindFirstChildOfClass("Decal") or Instance.new("Decal",headPart)
+	face.Texture = faceTexture
+	face.Face = Enum.NormalId.Front
+	face.Transparency = 0
+end
+
+local crown = noli:FindFirstChild("VoidstarCrown")
+if crown then
+	local sa = crown:FindFirstChildOfClass("SurfaceAppearance")
+	if sa then sa:Destroy() end
+	if crown:IsA("MeshPart") then
+		crown.MeshId = crownMeshId
+		crown.TextureID = crownTextureId
+		crown.Size = crownSize
+	else
+		local mesh = crown:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh",crown)
+		mesh.MeshId = crownMeshId
+		mesh.TextureId = crownTextureId
+		mesh.Scale = crownSize
+	end
+end
+
+local leftArm = noli:FindFirstChild("Left Arm")
+if leftArm then
+	local mesh = leftArm:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh",leftArm)
+	mesh.MeshId = leftArmMeshId
+	mesh.TextureId = leftArmTextureId
+	mesh.Scale = leftArmScale
+end
+
+local rightArm = noli:FindFirstChild("Right Arm")
+if rightArm then
+	local tentacle = rightArm:FindFirstChild("TentacleBase")
+	if tentacle then
+		for _,o in ipairs(tentacle:GetDescendants()) do
+			if o:IsA("Beam") then
+				o.Color = ColorSequence.new(Color3.fromRGB(150,0,0))
+				o.FaceCamera = false
+			end
+		end
+	end
+end
+
+for _,obj in ipairs(noli:GetDescendants()) do
+	if obj:IsA("ParticleEmitter") then
+		obj.Color = ColorSequence.new(Color3.fromRGB(150,0,0))
+	elseif obj:IsA("Fire") or obj:IsA("Smoke") then
+		obj.Color = Color3.fromRGB(150,0,0)
+	elseif obj:IsA("Sparkles") then
+		obj.SparkleColor = Color3.fromRGB(150,0,0)
+	end
+end
+
+local voidstar = noli:FindFirstChild("Voidstar")
+if voidstar then
+	for _,o in ipairs(voidstar:GetDescendants()) do
+		if o:IsA("BasePart") then
+			o.BrickColor = BrickColor.new("Persimmon")
+			if o:IsA("MeshPart") then o.Color = Color3.fromRGB(236,88,0) end
+		elseif o:IsA("Decal") then
+			o.Color3 = Color3.fromRGB(236,88,0)
+		elseif o:IsA("ParticleEmitter") then
+			o.Color = ColorSequence.new(Color3.fromRGB(236,88,0))
+		elseif o:IsA("Beam") then
+			o.Color = ColorSequence.new(Color3.fromRGB(255,89,89))
+		end
+	end
+	if voidstar:IsA("BasePart") then
+		voidstar.BrickColor = BrickColor.new("Persimmon")
+		voidstar.Color = Color3.fromRGB(255,89,89)
+	end
+end
