@@ -22,14 +22,14 @@ end
 
 if not isPlayingWhitelistedAnim() then
 	StarterGui:SetCore("SendNotification", {
-		Title = "Friend Request",
+		Title = "error",
 		Text = "You are not default Noli, nor killer",
 		Duration = 5
 	})
 	return
 else
 	StarterGui:SetCore("SendNotification", {
-		Title = "Script Notification",
+		Title = "success!!!",
 		Text = "Script firedddd/",
 		Duration = 5
 	})
